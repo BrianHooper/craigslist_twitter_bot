@@ -1,10 +1,21 @@
+"""
+     Monitors a craigslist search for changes and updates new postings to twitter
+"""
+
+__author__ = "Brian Hooper"
+__copyright__ = "Copyright (c) 2018 Brian Hooper"
+__license__ = "MIT"
+__version__ = "1.0"
+__email__ = "brian_hooper@msn.com"
+
 from bs4 import BeautifulSoup
 from time import sleep
 import requests
 import twitter
 
-""""""
+
 class CraigItem:
+    """Represents a single craigslist post"""
     def __init__(self, price, name, url):
         self.price = price
         self.name = name
@@ -18,12 +29,16 @@ class CraigItem:
 
 
 def get_data(url):
+    """Returns a list of craigslist posts at the specified url"""
     if url is None:
         return []
+
+    # Retrieve html
     response = requests.get(url)
     soup = BeautifulSoup(response.content, "html.parser")
     cr_data = soup.find_all('li', attrs={'class': 'result-row'})
 
+    # Parse html into CraigItem objects
     craig_items = []
     for item in cr_data:
         try:
@@ -42,6 +57,7 @@ def get_data(url):
 
 
 def contains(item, elements):
+    """Returns True if the item is contained in the list elements"""
     for element in elements:
         if item.equals(element):
             return True
@@ -49,6 +65,8 @@ def contains(item, elements):
 
 
 def update_new_items(twitter_api, old_postings, new_postings):
+    """Updates twitter with any posts in new_postings
+    that are not also in old_postings"""
     for item in new_postings:
         if contains(item, old_postings):
             break
@@ -61,6 +79,7 @@ def update_new_items(twitter_api, old_postings, new_postings):
 
 
 def loop(twitter_api, cr_url, loop_seconds):
+    """Continuously checks craigslist for new postings at the specified url"""
     postings = get_data(cr_url)
     while True:
         sleep(loop_seconds)
